@@ -11,11 +11,15 @@ import {
 } from "@solana/web3.js";
 
 import express from "express";
+import cors from "cors";
 import dotenv from "dotenv";
+import { connection } from "./connection";
+import { createToken, getAssociatedTokenAccountAddress } from "./tokenProgram";
 import { createAccount, getBalance, sendSolana } from "./systemProgram";
 dotenv.config();
 const app = express();
 
+app.use(cors());
 app.use(express.json());
 
 app.get("/", (req, res) => {
@@ -33,7 +37,7 @@ app.get("/balance", async (req, res) => {
     return res.json({ error: "Public key is invalid" });
   }
 });
-
+// transfer
 app.post("/send", async (req, res) => {
   const { reciever, amount } = req.body;
   if (reciever === undefined || amount === undefined) {
@@ -53,6 +57,7 @@ app.post("/send", async (req, res) => {
 
 // Get balance => getBalance(new PublicKey("5MF4QDutGLKRPF5M8VJaasfTRdY7hMzSQ48FdV8JADJW"));
 
+// create account
 app.post("/createAccount", async (req, res) => {
   try {
     const signature = await createAccount();
@@ -62,6 +67,52 @@ app.post("/createAccount", async (req, res) => {
     return res.json({ error: "Something went wrong" });
   }
 });
-app.listen(3000, () => {
-  console.log("Server is running on port 3000");
+
+app.post("/airdrop", async (req, res) => {
+  const { publicKey, amount } = req.body;
+  console.log("You hit the airdrop endpoint");
+  if (!publicKey || !amount) {
+    return res.json({
+      error: "Public key and amount are required",
+    });
+  }
+
+  try {
+    console.log("Initiating Airdrop");
+    const airdropSignature = await connection.requestAirdrop(
+      new PublicKey(publicKey),
+      LAMPORTS_PER_SOL * amount,
+    );
+    console.log("Started");
+    await connection.confirmTransaction(airdropSignature);
+    console.log("Confirmed");
+    return res.json({ signature: airdropSignature });
+  } catch (e) {
+    console.error(e);
+    return res.status(500).json({
+      error: "Airdrop failed",
+      message: e instanceof Error ? e.message : "Internal error",
+    });
+  }
+});
+app.post("/createToken", async (req, res) => {
+  try {
+    const signature = await createToken();
+    res.json({ signature });
+  } catch (e) {
+    console.log(e);
+    return res.json({ error: "Something went wrong" });
+  }
+});
+app.post("/getAssociatedTokenAccountAddress", async (req, res) => {
+  try {
+    const address = await getAssociatedTokenAccountAddress();
+    res.json({ address });
+  } catch (e) {
+    console.log(e);
+    return res.json({ error: "Something went wrong" });
+  }
+});
+app.listen(3001, () => {
+  console.log("Server is running on port 3001");
 });
