@@ -14,7 +14,11 @@ import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import { connection } from "./connection";
-import { createToken, getAssociatedTokenAccountAddress } from "./tokenProgram";
+import {
+  createToken,
+  getAssociatedTokenAccountAddress,
+  getTokenBalance,
+} from "./tokenProgram";
 import { createAccount, getBalance, sendSolana } from "./systemProgram";
 dotenv.config();
 const app = express();
@@ -106,13 +110,30 @@ app.post("/createToken", async (req, res) => {
 });
 app.post("/getAssociatedTokenAccountAddress", async (req, res) => {
   try {
-    const address = await getAssociatedTokenAccountAddress();
+    const { mintAddress, publicKey } = await req.body;
+    const address = await getAssociatedTokenAccountAddress(
+      mintAddress,
+      publicKey,
+    );
     res.json({ address });
   } catch (e) {
     console.log(e);
     return res.json({ error: "Something went wrong" });
   }
 });
-app.listen(3001, () => {
-  console.log("Server is running on port 3001");
+app.post("/getTokenBalance", async (req, res) => {
+  try {
+    const { mintAddress, publicKey } = await req.body;
+    const balance = await getTokenBalance(mintAddress, publicKey);
+    res.json({
+      message: balance,
+    });
+  } catch (e) {
+    res.json({
+      message: e,
+    });
+  }
+});
+app.listen(3000, () => {
+  console.log("Server is running on port 3000");
 });
