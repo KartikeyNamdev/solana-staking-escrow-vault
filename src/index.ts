@@ -10,7 +10,7 @@ import {
   LAMPORTS_PER_SOL,
 } from "@solana/web3.js";
 
-import express from "express";
+import express, { Request, Response } from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import { connection } from "./connection";
@@ -27,7 +27,7 @@ import {
 dotenv.config();
 const app = express();
 
-const FRONTEND_URL = process.env.FRONTEND_URL || "*";
+const FRONTEND_URL: string = process.env.FRONTEND_URL || "*";
 
 app.use(
   cors({
@@ -38,11 +38,11 @@ app.use(
 );
 app.use(express.json());
 
-app.get("/", (req, res) => {
+app.get("/", (req: Request, res: Response) => {
   res.send("Welcome to Solana Application, TODO : Escrow, Vault, Staking");
 });
 
-app.post("/balance", async (req, res) => {
+app.post("/balance", async (req: Request, res: Response) => {
   if (!req.body.publicKey) {
     return res.json({ error: "Public key is required" });
   }
@@ -55,7 +55,7 @@ app.post("/balance", async (req, res) => {
 });
 
 // transfer (prepare transaction)
-app.post("/send", async (req, res) => {
+app.post("/send", async (req: Request, res: Response) => {
   const { sender, reciever, amount } = req.body;
   if (!sender || !reciever || amount === undefined) {
     return res.json({ error: "Sender, reciever and amount are required" });
@@ -74,7 +74,7 @@ app.post("/send", async (req, res) => {
 });
 
 // create account (prepare transaction)
-app.post("/createAccount", async (req, res) => {
+app.post("/createAccount", async (req: Request, res: Response) => {
   const { payer } = req.body;
   if (!payer) {
     return res.json({ error: "Payer is required" });
@@ -88,7 +88,7 @@ app.post("/createAccount", async (req, res) => {
   }
 });
 
-app.post("/airdrop", async (req, res) => {
+app.post("/airdrop", async (req: Request, res: Response) => {
   const { publicKey, amount } = req.body;
   console.log("You hit the airdrop endpoint");
   if (!publicKey || !amount) {
@@ -116,7 +116,7 @@ app.post("/airdrop", async (req, res) => {
   }
 });
 
-app.post("/createToken", async (req, res) => {
+app.post("/createToken", async (req: Request, res: Response) => {
   const { payer } = req.body;
   if (!payer) {
     return res.json({ error: "Payer is required" });
@@ -129,20 +129,23 @@ app.post("/createToken", async (req, res) => {
     return res.json({ error: "Something went wrong" });
   }
 });
-app.post("/getAssociatedTokenAccountAddress", async (req, res) => {
-  try {
-    const { mintAddress, publicKey } = await req.body;
-    const address = await getAssociatedTokenAccountAddress(
-      mintAddress,
-      publicKey,
-    );
-    res.json({ address });
-  } catch (e) {
-    console.log(e);
-    return res.json({ error: "Something went wrong" });
-  }
-});
-app.post("/getTokenBalance", async (req, res) => {
+app.post(
+  "/getAssociatedTokenAccountAddress",
+  async (req: Request, res: Response) => {
+    try {
+      const { mintAddress, publicKey } = await req.body;
+      const address = await getAssociatedTokenAccountAddress(
+        mintAddress,
+        publicKey,
+      );
+      res.json({ address });
+    } catch (e) {
+      console.log(e);
+      return res.json({ error: "Something went wrong" });
+    }
+  },
+);
+app.post("/getTokenBalance", async (req: Request, res: Response) => {
   try {
     const { mintAddress, publicKey } = await req.body;
     const balance = await getTokenBalance(mintAddress, publicKey);
