@@ -15,22 +15,34 @@ import cors from "cors";
 import dotenv from "dotenv";
 import { connection } from "./connection";
 import {
-  createToken,
   getAssociatedTokenAccountAddress,
   getTokenBalance,
+  prepareCreateToken,
 } from "./tokenProgram";
-import { createAccount, getBalance, sendSolana } from "./systemProgram";
+import {
+  getBalance,
+  prepareCreateAccount,
+  prepareSendSolana,
+} from "./systemProgram";
 dotenv.config();
 const app = express();
 
-app.use(cors());
+const FRONTEND_URL = process.env.FRONTEND_URL || "*";
+
+app.use(
+  cors({
+    origin: FRONTEND_URL,
+    methods: ["GET", "POST"],
+    credentials: true,
+  }),
+);
 app.use(express.json());
 
 app.get("/", (req, res) => {
   res.send("Welcome to Solana Application, TODO : Escrow, Vault, Staking");
 });
 
-app.get("/balance", async (req, res) => {
+app.post("/balance", async (req, res) => {
   if (!req.body.publicKey) {
     return res.json({ error: "Public key is required" });
   }
@@ -41,31 +53,35 @@ app.get("/balance", async (req, res) => {
     return res.json({ error: "Public key is invalid" });
   }
 });
-// transfer
+
+// transfer (prepare transaction)
 app.post("/send", async (req, res) => {
-  const { reciever, amount } = req.body;
-  if (reciever === undefined || amount === undefined) {
-    return res.json({ error: "Reciever and amount are required" });
+  const { sender, reciever, amount } = req.body;
+  if (!sender || !reciever || amount === undefined) {
+    return res.json({ error: "Sender, reciever and amount are required" });
   }
   try {
-    const signature = await sendSolana({
+    const data = await prepareSendSolana({
+      sender: new PublicKey(sender),
       reciever: new PublicKey(reciever),
-      amount,
+      amount: parseFloat(amount),
     });
-    return res.json({ signature });
+    return res.json(data);
   } catch (e) {
     console.log(e);
     return res.json({ error: "Something went wrong" });
   }
 });
 
-// Get balance => getBalance(new PublicKey("5MF4QDutGLKRPF5M8VJaasfTRdY7hMzSQ48FdV8JADJW"));
-
-// create account
+// create account (prepare transaction)
 app.post("/createAccount", async (req, res) => {
+  const { payer } = req.body;
+  if (!payer) {
+    return res.json({ error: "Payer is required" });
+  }
   try {
-    const signature = await createAccount();
-    res.json({ signature });
+    const data = await prepareCreateAccount(new PublicKey(payer));
+    res.json(data);
   } catch (e) {
     console.log(e);
     return res.json({ error: "Something went wrong" });
@@ -99,10 +115,15 @@ app.post("/airdrop", async (req, res) => {
     });
   }
 });
+
 app.post("/createToken", async (req, res) => {
+  const { payer } = req.body;
+  if (!payer) {
+    return res.json({ error: "Payer is required" });
+  }
   try {
-    const signature = await createToken();
-    res.json({ signature });
+    const data = await prepareCreateToken(new PublicKey(payer));
+    res.json(data);
   } catch (e) {
     console.log(e);
     return res.json({ error: "Something went wrong" });
@@ -134,6 +155,6 @@ app.post("/getTokenBalance", async (req, res) => {
     });
   }
 });
-app.listen(3000, () => {
-  console.log("Server is running on port 3000");
+app.listen(3001, () => {
+  console.log("Server is running on port 3001");
 });

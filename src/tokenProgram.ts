@@ -1,27 +1,65 @@
-import { Keypair, PublicKey } from "@solana/web3.js";
-import { connection } from "./connection";
 import {
-  createMint,
+  createInitializeMintInstruction,
   getAccount,
   getAssociatedTokenAddress,
+  MINT_SIZE,
   TOKEN_2022_PROGRAM_ID,
 } from "@solana/spl-token";
+import {
+  Keypair,
+  PublicKey,
+  SystemProgram,
+  Transaction,
+} from "@solana/web3.js";
 import dotenv from "dotenv";
+import { connection } from "./connection";
 dotenv.config();
-export const createToken = async () => {
-  const payer = Keypair.fromSecretKey(
-    new Uint8Array(JSON.parse(process.env.SECRET_KEY_ARRAY || "[]")),
-  );
-  const mintAuthority = payer;
-  const mint = await createMint(
-    connection,
-    payer,
-    mintAuthority.publicKey,
-    null,
-    6,
-  );
-  console.log("Mint address : ", mint.toBase58());
-  return mint;
+
+export const prepareCreateToken = async (payer: PublicKey) => {
+  try {
+    const mintKeypair = Keypair.generate();
+    const lamports =
+      await connection.getMinimumBalanceForRentExemption(MINT_SIZE);
+
+    const txn = new Transaction().add(
+      SystemProgram.createAccount({
+        fromPubkey: payer,
+        newAccountPubkey: mintKeypair.publicKey,
+        space: MINT_SIZE,
+        lamports,
+        programId: TOKEN_2022_PROGRAM_ID,
+      }),
+      createInitializeMintInstruction(
+        mintKeypair.publicKey,
+        6,
+        payer,
+        null,
+        TOKEN_2022_PROGRAM_ID,
+      ),
+    );
+
+    const { blockhash } = await connection.getLatestBlockhash();
+    txn.recentBlockhash = blockhash;
+    txn.feePayer = payer;
+
+    // Partial sign with the mint keypair
+    txn.partialSign(mintKeypair);
+
+    const serializedTransaction = txn
+      .serialize({
+        requireAllSignatures: false,
+        verifySignatures: false,
+      })
+      .toString("base64");
+
+    return {
+      transaction: serializedTransaction,
+      mint: mintKeypair.publicKey.toBase58(),
+    };
+  } catch (e) {
+    console.error(e);
+    throw e;
+  }
 };
 
 export const getAssociatedTokenAccountAddress = async (
