@@ -1,0 +1,21 @@
+{
+  "name": "Kartikey's Token",
+  "symbol": "KT",
+  "description": "A token for the best developer",
+  "image": "https://tomato-rapid-flyingfish-211.mypinata.cloud/ipfs/bafybeihrmn25on26bwvfo4jqml3t276iwf55434lkkqggqdest2vjmy2qy",
+  "attributes": [
+    {
+      "trait_type": "Generation",
+      "value": "1"
+    }
+  ],
+  "properties": {
+    "files": [
+      {
+        "uri": "https://tomato-rapid-flyingfish-211.mypinata.cloud/ipfs/bafybeihrmn25on26bwvfo4jqml3t276iwf55434lkkqggqdest2vjmy2qy",
+        "type": "image/png"
+      }
+    ],
+    "category": "image"
+  }
+}
