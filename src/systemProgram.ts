@@ -32,6 +32,7 @@ export const prepareSendSolana = async ({
         lamports: Math.floor(LAMPORTS_PER_SOL * amount),
       }),
     );
+    // 3uhG7Sx5rSF52W5t9MKHR4wjk7CYtmJtdib3p3nWeQpMxxzndMNXFRfDidCX75nVcc8U33g6vqS72szVRKfhgbFv
 
     const { blockhash } = await connection.getLatestBlockhash();
     txn.recentBlockhash = blockhash;
@@ -43,7 +44,7 @@ export const prepareSendSolana = async ({
         verifySignatures: false,
       })
       .toString("base64");
-
+    console.log(serializedTransaction);
     return { transaction: serializedTransaction };
   } catch (e) {
     console.error(e);
