@@ -1,0 +1,37 @@
+name: SOLVAULT Core Package CI
+
+on:
+  push:
+    paths:
+      - 'packages/solvault-core/**'
+  pull_request:
+    paths:
+      - 'packages/solvault-core/**'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [18.x, 20.x]
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+          cache-dependency-path: 'packages/solvault-core/package-lock.json'
+
+      - name: Install Dependencies
+        run: |
+          cd packages/solvault-core
+          npm ci
+
+      - name: Compile and Run Tests
+        run: |
+          cd packages/solvault-core
+          npm run test

@@ -1,12 +1,6 @@
-// 5MF4QDutGLKRPF5M8VJaasfTRdY7hMzSQ48FdV8JADJW
 import {
   Connection,
-  Keypair,
   PublicKey,
-  SystemProgram,
-  Transaction,
-  sendAndConfirmTransaction,
-  clusterApiUrl,
   LAMPORTS_PER_SOL,
 } from "@solana/web3.js";
 
@@ -15,15 +9,14 @@ import cors from "cors";
 import dotenv from "dotenv";
 import { connection } from "./connection";
 import {
-  getAssociatedTokenAccountAddress,
-  getTokenBalance,
-  prepareCreateToken,
-} from "./tokenProgram";
-import {
   getBalance,
-  prepareCreateAccount,
   prepareSendSolana,
-} from "./systemProgram";
+  prepareCreateAccount,
+  prepareCreateToken,
+  getAssociatedTokenAccountAddress,
+  getTokenBalance
+} from "@solvault/core";
+
 dotenv.config();
 const app = express();
 
@@ -47,7 +40,7 @@ app.post("/balance", async (req: Request, res: Response) => {
     return res.json({ error: "Public key is required" });
   }
   try {
-    const balance = await getBalance(new PublicKey(req.body.publicKey));
+    const balance = await getBalance(connection, new PublicKey(req.body.publicKey));
     return res.json({ balance });
   } catch (e) {
     return res.json({ error: "Public key is invalid" });
@@ -61,9 +54,9 @@ app.post("/send", async (req: Request, res: Response) => {
     return res.json({ error: "Sender, reciever and amount are required" });
   }
   try {
-    const data = await prepareSendSolana({
+    const data = await prepareSendSolana(connection, {
       sender: new PublicKey(sender),
-      reciever: new PublicKey(reciever),
+      receiver: new PublicKey(reciever),
       amount: parseFloat(amount),
     });
     return res.json(data);
@@ -80,7 +73,7 @@ app.post("/createAccount", async (req: Request, res: Response) => {
     return res.json({ error: "Payer is required" });
   }
   try {
-    const data = await prepareCreateAccount(new PublicKey(payer));
+    const data = await prepareCreateAccount(connection, new PublicKey(payer));
     res.json(data);
   } catch (e) {
     console.log(e);
@@ -122,7 +115,7 @@ app.post("/createToken", async (req: Request, res: Response) => {
     return res.json({ error: "Payer is required" });
   }
   try {
-    const data = await prepareCreateToken(new PublicKey(payer));
+    const data = await prepareCreateToken(connection, new PublicKey(payer));
     res.json(data);
   } catch (e) {
     console.log(e);
@@ -138,7 +131,7 @@ app.post(
         mintAddress,
         publicKey,
       );
-      res.json({ address });
+      res.json({ address: address.toBase58() });
     } catch (e) {
       console.log(e);
       return res.json({ error: "Something went wrong" });
@@ -148,7 +141,7 @@ app.post(
 app.post("/getTokenBalance", async (req: Request, res: Response) => {
   try {
     const { mintAddress, publicKey } = await req.body;
-    const balance = await getTokenBalance(mintAddress, publicKey);
+    const balance = await getTokenBalance(connection, mintAddress, publicKey);
     res.json({
       message: balance,
     });

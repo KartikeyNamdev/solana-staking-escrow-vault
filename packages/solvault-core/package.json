@@ -1,0 +1,20 @@
+{
+  "name": "@solvault/core",
+  "version": "1.0.0",
+  "description": "Core non-custodial Solana web3 utilities for SOLVAULT",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "type": "module",
+  "scripts": {
+    "build": "npx tsc -b",
+    "test": "npm run build && node dist/test.js"
+  },
+  "dependencies": {
+    "@solana/spl-token": "^0.4.12",
+    "@solana/web3.js": "^1.98.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.24",
+    "typescript": "^5.3.3"
+  }
+}
